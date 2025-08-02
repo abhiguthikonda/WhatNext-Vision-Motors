@@ -1,4 +1,4 @@
-# hatNext-Vision-Motors  - VisionMotors -Salesforce-Powered Business Automation Suite
+# WhatNext-Vision-Motors  - VisionMotors -Salesforce-Powered Business Automation Suite
 # overview
 The company is using 'salesforce' to improve how it serves customers and runs it operations.
 Project is mainly focused on making it easier for customers to order vehicles & helping company to operate more efficiently..
