@@ -1,0 +1,56 @@
+global class VehicleOrderBatch implements Database.Batchable<sObject>, Database.AllowsCallouts {
+
+    global Database.QueryLocator start(Database.BatchableContext bc) {
+        return Database.getQueryLocator([
+            SELECT Id, Status__c, Vehicle__c // Corrected Status__c and Vehicle__c
+            FROM Vehicle_Order__c
+            WHERE Status__c != 'Confirmed' // Changed from 'Pending' to != 'Confirmed' to process new orders
+        ]);
+    }
+
+    global void execute(Database.BatchableContext bc, List<Vehicle_Order__c> orderList) {
+        Set<Id> vehicleIds = new Set<Id>();
+        for (Vehicle_Order__c order : orderList) { // Added colon for iteration
+            if (order.Vehicle__c != null) { // Corrected Vehicle__c
+                vehicleIds.add(order.Vehicle__c);
+            }
+        }
+
+        if (!vehicleIds.isEmpty()) {
+            Map<Id, Vehicle__c> vehicleStockMap = new Map<Id, Vehicle__c>();
+            for (Vehicle__c vehicle : [SELECT Id, Stock_Quantity__c FROM Vehicle__c WHERE Id IN :vehicleIds]) { // Corrected Stock_Quantity__c and added colon for vehicle
+                vehicleStockMap.put(vehicle.Id, vehicle); // Corrected vehicle.Id
+            }
+
+            List<Vehicle_Order__c> ordersToUpdate = new List<Vehicle_Order__c>();
+            List<Vehicle__c> vehiclesToUpdate = new List<Vehicle__c>();
+
+            for (Vehicle_Order__c order : orderList) { // Added colon for iteration
+                if (vehicleStockMap.containsKey(order.Vehicle__c)) { // Corrected Vehicle__c
+                    Vehicle__c vehicle = vehicleStockMap.get(order.Vehicle__c); // Corrected Vehicle__c
+                    if (vehicle.Stock_Quantity__c > 0) { // Corrected Stock_Quantity__c
+                        order.Status__c = 'Confirmed'; // Corrected Status__c
+                        vehicle.Stock_Quantity__c -= 1; // Corrected Stock_Quantity__c
+                        ordersToUpdate.add(order);
+                        vehiclesToUpdate.add(vehicle);
+                    } else {
+                        // Optionally, handle orders where stock is zero (e.g., set status to 'Out of Stock')
+                        // order.Status__c = 'Out of Stock';
+                        // ordersToUpdate.add(order);
+                    }
+                }
+            }
+
+            if (!ordersToUpdate.isEmpty()) {
+                update ordersToUpdate;
+            }
+            if (!vehiclesToUpdate.isEmpty()) { // Corrected vehiclesToUpdate
+                update vehiclesToUpdate;
+            }
+        }
+    }
+
+    global void finish(Database.BatchableContext bc) {
+        System.debug('Vehicle order batch job completed.');
+    }
+}

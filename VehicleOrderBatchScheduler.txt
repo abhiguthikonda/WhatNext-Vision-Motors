@@ -1,0 +1,8 @@
+global class VehicleOrderBatchScheduler implements Schedulable {
+
+    global void execute(SchedulableContext sc) {
+        VehicleOrderBatch batchJob = new VehicleOrderBatch();
+        Database.executeBatch(batchJob, 200); // Passed the batchJob instance and specified a batch size of 200
+    }
+
+}
